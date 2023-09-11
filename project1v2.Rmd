@@ -1,0 +1,97 @@
+---
+title: "Project 1"
+author: "Your names here"
+date: "2023-09-05"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, tidy=TRUE}
+knitr::opts_chunk$set(echo = TRUE,cache=TRUE, 
+                      autodep=TRUE, cache.comments=FALSE,
+                      message=FALSE, warning=FALSE,
+                      fig.width=4.5, fig.height=3.5)
+
+library(faraway)
+data("hprice")
+```
+
+-   Note: for each question, be sure to include both R code and output that is pertinent to your answer(s).
+
+-   Use hprice in the faraway package.
+
+-   The data include 324 observations from 36 US metropolitan statistical areas (MSAs) over 9 years from 1986-1994: 36 x 9 = 324
+
+-   Assume that the MSAs in the data are a simple random sample of the population of MSAs in the US. See <https://www2.census.gov/geo/maps/metroarea/us_wall/Mar2020/CBSA_WallMap_Mar2020.pdf> for MSAs
+
+-   Refer to the R manual for faraway (on Canvas - see Module 1) for background information about this dataset as well as variable definitions.
+
+-   The housing sale price is the outcome variable of interest. Because the dataset has a natural log transformed price variable, narsp, we will recode this to create a variable called "homeprice" by transforming narsp back to the dollar unit for an easier interpretation as follows:
+
+```{r}
+hprice$homeprice <- exp(hprice$narsp)*1000
+```
+
+1.  What are the mean and the variance of homeprice? What do they mean?
+
+```{r}
+mean_homeprice <- mean(hprice$homeprice)
+variance_homeprice <- var(hprice$homeprice)
+mean_homeprice
+variance_homeprice
+```
+
+2.  Construct a 95% confidence interval of the average homeprice. What does the confidence interval imply?
+
+```{r}
+confidence_interval <- qt(0.975, df=length(hprice$homeprice)-1) * (sd(hprice$homeprice) / sqrt(length(hprice$homeprice)))
+lower_bound <- mean_homeprice - confidence_interval
+upper_bound <- mean_homeprice + confidence_interval
+c(lower_bound, upper_bound)
+```
+
+3.  Estimate the average homeprice by whether the MSA was adjacent to a coastline, noted in the variable ajwtr, and the standard errors.
+
+```{r}
+coastline_means <- tapply(hprice$homeprice, hprice$ajwtr, mean)
+coastline_se <- tapply(hprice$homeprice, hprice$ajwtr, function(x) sd(x) / sqrt(length(x)))
+coastline_means
+coastline_se
+```
+
+4.  Test the difference in homeprice between coastline MSAs and non-coastline MSAs. Clearly state the formula for the null hypothesis, the test method, and your rationale for selecting the method. What do you conclude about the hypothesis?
+
+```{r}
+t_test_result <- t.test(homeprice ~ ajwtr, data = hprice)
+t_test_result
+```
+
+5.  Estimate the Pearson correlation coefficient between homeprice and per capita income of the MSA for a given year, noted in the variable ypc.
+
+```{r}
+correlation <- cor(hprice$homeprice, hprice$ypc)
+correlation
+```
+
+6.  Test whether the correlation coefficient between homeprice and ypc is 0, or not. Clearly state the null hypothesis being tested and include the formula.
+
+```{r}
+cor_test_result <- cor.test(hprice$homeprice, hprice$ypc)
+cor_test_result
+```
+
+7.  Can you say that per capita income has an effect on the home sales price using the results from #6? Why or why not?
+
+```{r}
+if (cor_test_result$p.value < 0.05) {
+  cat("Yes, per capita income has a significant effect on home sales price.")
+} else {
+  cat("No, per capita income doesn't have a significant effect on home sales price.")
+}
+```
+
+8.  Test the normality of homeprice. Would this change your responses to questions 1-7? Why or why not?
+
+```{r}
+shapiro_test <- shapiro.test(hprice$homeprice)
+shapiro_test
+```
