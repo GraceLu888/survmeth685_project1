@@ -61,6 +61,16 @@ coastline_se
 4.  Test the difference in homeprice between coastline MSAs and non-coastline MSAs. Clearly state the formula for the null hypothesis, the test method, and your rationale for selecting the method. What do you conclude about the hypothesis?
 
 ```{r}
+#use t test to determine if mean homeprice in coastline and non-coastline MSAs is the same
+#null- mean homeprice of coastal cities= mean homeprice of non-coastal cities
+
+#test equal variance
+#null- Variance of homeprice in coastal cities= variance of homeprice in non costal cities
+var.test(homeprice ~ ajwtr, hprice, alternative = "two.sided")
+#reject null
+
+#use t-test
+#null- mean homeprice of costal cities= mean homeprice of non-coastal cities
 t_test_result <- t.test(homeprice ~ ajwtr, data = hprice)
 t_test_result
 ```
@@ -95,3 +105,4 @@ if (cor_test_result$p.value < 0.05) {
 shapiro_test <- shapiro.test(hprice$homeprice)
 shapiro_test
 ```
+#homeprice does not follow a normal distribution, therefore answers 1-7 are not accurate. The sample means are innacurate to the population mean
