@@ -39,6 +39,8 @@ variance_homeprice <- var(hprice$homeprice)
 mean_homeprice
 variance_homeprice
 ```
+#the mean is the average housing sale price 
+#the variance is the squared standard deviation and shows the spread from the mean
 
 2.  Construct a 95% confidence interval of the average homeprice. What does the confidence interval imply?
 
@@ -48,6 +50,7 @@ lower_bound <- mean_homeprice - confidence_interval
 upper_bound <- mean_homeprice + confidence_interval
 c(lower_bound, upper_bound)
 ```
+# We can estimate that the true mean homeprice falls between 90062.70 and 98760.14 95% of the time
 
 3.  Estimate the average homeprice by whether the MSA was adjacent to a coastline, noted in the variable ajwtr, and the standard errors.
 
@@ -84,6 +87,7 @@ correlation
 
 6.  Test whether the correlation coefficient between homeprice and ypc is 0, or not. Clearly state the null hypothesis being tested and include the formula.
 
+#null- correlation coefficient= 0
 ```{r}
 cor_test_result <- cor.test(hprice$homeprice, hprice$ypc)
 cor_test_result
