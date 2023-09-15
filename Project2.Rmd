@@ -1,0 +1,58 @@
+---
+title: "Project 2"
+author: "Sol Rabine and Keqing Lu"
+date: "9/12/2022"
+output: pdf_document
+number_sections: yes
+fontsize: 12pt
+---
+
+```{r setup, include=FALSE, tidy=TRUE}
+knitr::opts_chunk$set(echo = TRUE,cache=TRUE, 
+                      autodep=TRUE, cache.comments=FALSE,
+                      message=FALSE, warning=FALSE)
+library("dplyr")
+#install.packages("tidyr")
+library("tidyr")
+```
+
+# 1. JWHT Chapter 2. Exercise 5.
+What are the advantages and disadvantages of a very flexible (versus a less flexible)
+approach for regression or classification? Under what circumstances might a more flexible
+approach be preferred to a less flexible approach? When might a less flexible approach be
+preferred?
+
+#Very flexible models have the best and most accurate fit to the data itself. They are preffered when there is a large number of observations and when the goal is to make predictions. Very flexible approaches tend to be less legible. A less flexible approach, like a linear approach may be preferred when giving a broad summary of the data, or when you are interested in the average of the data.
+
+
+#2. Faraway Chapter 2. Exercise 2.
+The dataset uswages is drawn as a sample from the Current Population Survey in 1988.
+Fit a model with weekly wages as the response and years of education and experience as
+predictors in linear regression. Report and give a simple interpretation to the regression
+coefficient for years of education. Now fit the same model but with logged weekly wages. Give
+an interpretation to the regression coefficient for years of education. Which interpretation is
+more natural?
+```{r}
+library(faraway)
+data("uswages")
+```
+
+```{r}
+pred_wage<-lm(wage~educ+exper,uswages)
+summary(pred_wage)
+coef(pred_wage)
+```
+
+The regression coefficient for education is 51.1753. This means that each increase of one year of education is associated with a 51.1753 unit increase in wage when experience is fixed.
+
+```{r}
+
+log_wage <- log(uswages$wage)
+wlogs<- bind_cols(uswages, log_wage)
+pred_log_wage<-lm(log_wage~educ+exper,wlogs)
+summary(pred_log_wage)
+coef(pred_log_wage)
+```
+
+increasing education by one changes the log odds by .09506
+
