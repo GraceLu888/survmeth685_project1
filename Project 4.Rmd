@@ -1,0 +1,98 @@
+---
+title: "Project 4"
+output: pdf_document
+date: "2023-09-26"
+---
+
+```{r setup, include=FALSE, tidy=TRUE}
+knitr::opts_chunk$set(echo = TRUE,cache=TRUE, 
+                      autodep=TRUE, cache.comments=FALSE,
+                      message=FALSE, warning=FALSE,
+                      fig.width=4.5, fig.height=3)
+```
+
+This exercise involves the Boston housing data set in ISLR2. Assume that we are
+interested in median home values, medv.
+1. Examine medv as a function of crim, zn and indus in a multiple linear regression.
+```{r}
+library(MASS)
+View(Boston)
+```
+
+```{r}
+lm_all <- lm(medv~crim+zn+indus, Boston)
+lm_all
+```
+A. Identify predictors significant at 5% level.
+```{r}
+df_all<-df.residual(lm_all)
+
+t_crim<-coef(lm_all)[2]/sqrt(vcov(lm_all)[2,2]) 
+t_crim
+p_crim<-2*pt(-abs(t_crim),df_all)
+p_crim
+
+t_zn<-coef(lm_all)[3]/sqrt(vcov(lm_all)[3,3]) 
+t_zn
+p_zn<-2*pt(-abs(t_zn),df_all)
+p_zn
+
+t_indus<-coef(lm_all)[4]/sqrt(vcov(lm_all)[4,4]) 
+t_indus
+p_indus<-2*pt(-abs(t_indus),df_all)
+p_indus
+
+summary(lm_all)
+```
+crime, industry, and zoning are all significannt predictors of median home values.
+
+B. List the hypotheses tested in 1.A and their conclusions.
+
+$H_0: \beta_1=0$ false
+$H_0: \beta_2=0$ false
+$H_0: \beta_3=0$ false
+
+C. What do the estimated regression coefficients in 1.A mean in lay terms? Do
+they make sense?
+
+For a neighborhood with no industry and no crime, we can expect 
+an increase of .05850 in median home values for an increase of 1 unit in zoning for lots over 25,000 sq. ft.
+
+For a neighborhood with no industry and no zoning for lots over 25,000 sq. ft, we can expect a decrease of .24863 in median home values for an increase of 1 unit in per capita crime.
+
+For a neighborhood with no crime and no zoning for lots over 25,000 sq. ft, we can expect a decrease of .41558 in median home values for an increase of 1 unit in industry.
+
+D. Construct 95% confidence intervals for βcrim, βzn and βindus. How do the
+confidence intervals correspond to 1.A and 1.B?
+```{r}
+#beta_crim <- lm(medv~crim, Boston)
+ncrim <- dim(Boston)[[1]]
+lowCIcrim <- -0.24863-t_crim*sqrt(var(Boston$crim)/(ncrim-1))
+lowCIcrim
+upCIcrim <- -0.24863+t_crim*sqrt(var(Boston$crim)/(ncrim-1))
+upCIcrim
+
+nzn <- dim(Boston)[[2]]
+lowCIzn <- 0.05850-t_zn*sqrt(var(Boston$zn)/(nzn-1))
+lowCIzn
+upCIzn <- 0.05850+t_zn*sqrt(var(Boston$zn)/(nzn-1))
+upCIzn
+
+#nindus <- dim(Boston)[[3]]
+#lowCIindus <- -0.41558-t_indus*sqrt(var(Boston$indus)/(nindus-1))
+#lowCIindus
+#upCIindus <- -0.41558+t_indus*sqrt(var(Boston$indus)/(nindus-1))
+#upCIindus
+```
+
+E. Calculate the R2 and R2 adj by hand and report whether this matches the R2
+and R2 adj from the output and what they mean?
+```{r}
+
+```
+2. Compare the model from #1 and a simple linear regression of medv as a
+function of zn. Which would you prefer?
+```{r}
+lm(medv~zn, Boston)
+```
+The model from #1 is better because it shows a more complete picture of the factors than influence median home values. When crime and industry are taken into account, zoning has a less significant effect on home values.
