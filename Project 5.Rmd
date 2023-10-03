@@ -1,0 +1,51 @@
+---
+title: "Project5"
+output: pdf_document
+date: "2023-10-03"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+This exercise involves the Boston housing data set in ISLR2. Assume that we are
+interested in median home values, medv.
+```{r}
+library(MASS)
+View(Boston)
+```
+
+1. Examine medv as a function of chas in a simple linear regression model with
+an intercept. Notice the nature of chas for its use in this and following models.
+What hypothesis are you testing with each coefficient in lay terms? Given the
+results of the hypothesis testing, what do the coefficients mean?
+```{r}
+#class(chas$Boston)
+lmchas <- lm(medv~chas, Boston)
+summary(lmchas)
+```
+chas is a binary predictor variable that tells us if a suburb bounds the Charles River.
+
+The intercept tells us the average median home value for the suburbs that do not bound the river. From the output we know that it is 22.09 (1000$). With the coefficient we are testing if there is a difference between the average median home values for those that bound the river and those that do not. 
+From the output we know that there is a 6.35 (1000$) difference between these averages.
+
+$H_0:\gamma_2=0$
+$H_0:\gamma_2 dne 0$
+
+2. Examine medv as a function of chas and indus in a multiple linear regression.
+What do the coefficients mean?
+```{r}
+lmchasin <- lm(medv~indus+chas, Boston)
+summary(lmchasin)
+```
+For neighborhoods that do not bound the Charles River and do not have industry, the average median home value is the intercept, 29.43 (1000$). For those that do not bound the river, average median home value decreases by .67 (1000 dollars) for increases of 1 unit in industry. Holding industry constant, suburbs that do bound the river on average have a 7.48 (1000 dollar) higher median home value.
+
+3. Given results from #1 and #2, what do you conclude about chas and
+indus in relation to medv? Support your conclusion with a visualization.
+```{r}
+int<-ggplot(aes(x=indus,y=medv),data=Boston)+
+  facet_grid(~chas)+
+  geom_smooth(method="lm", se=FALSE) 
+int
+
+```
+Both industry and bounding the Charles river have a significant impact on average median home values, but the effect of industry is larger when a suburb does not bound the river. 
