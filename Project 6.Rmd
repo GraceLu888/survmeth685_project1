@@ -1,0 +1,154 @@
+---
+title: "Project 6"
+output: pdf_document
+date: "2023-10-17"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(faraway)
+```
+
+Faraway Chapter 4. Exercise 2. Using the teengamb data, fit a model with gamble
+as the response and the other variables as predictors.
+```{r}
+data("teengamb")
+lm(gamble~sex+status+income+verbal, teengamb)
+```
+A. Predict the amount that a male with average (given these data) status, income
+and verbal score would gamble along with an appropriate 95% CI.
+
+```{r}
+mod1<-lm(gamble~sex+status+income+verbal, teengamb)
+summary(mod1)
+mod1_x<-model.matrix(mod1) 
+dim(mod1_x)
+head(mod1_x)
+```
+
+```{r}
+datnew <- data.frame(
+  sex = 0,
+ status = mean(mod1$model$status),
+income = mean(mod1$model$income),
+verbal = mean(mod1$model$verbal)
+)
+
+predictions <- predict(
+  mod1,
+  newdata = datnew,
+  type = 'response',
+  se = TRUE
+)
+print(predictions)
+
+df_preds = data.frame(datnew, predictions) %>%
+  mutate(lower = fit - 1.96 * se.fit,
+         upper = fit + 1.96 * se.fit)%>%
+  summarise(mn_beta = mean(fit),
+            lcl = mean(lower),
+            ucl = mean(upper))
+print(df_preds)
+
+#predict(mod1, new=datnew, interval="prediction")
+```
+
+
+B. Repeat the prediction for a male with maximal values (for this data) of status,
+income and verbal score. Which CI is wider and why is this result expected?
+```{r}
+datnew1 <- data.frame(
+  sex = 0,
+ status = max(mod1$model$status),
+income = max(mod1$model$income),
+verbal = max(mod1$model$verbal)
+)
+
+predictions1 <- predict(
+  mod1,
+  newdata = datnew1,
+  type = 'response',
+  se = TRUE
+)
+print(predictions1)
+
+df_preds1 = data.frame(datnew1, predictions1) %>%
+  mutate(lower = fit - 1.96 * se.fit,
+         upper = fit + 1.96 * se.fit)%>%
+  summarise(mn_beta = mean(fit),
+            lcl = mean(lower),
+            ucl = mean(upper))
+print(df_preds1)
+```
+The CI for a male with maximum values is wider. This is because the residuals for data points at the extreme values are 
+
+C. Fit a model with sqrt(gamble) as the response but with the same predictors.
+Now predict the response and give a 95% prediction interval for the individual
+in #A. Take care to give your answer in the original units of the response.
+```{r}
+mod2 <- lm(sqrt(gamble)~sex+status+income+verbal, teengamb)
+
+datnew3 <- data.frame(
+  sex = 0,
+ status = mean(mod2$model$status),
+income = mean(mod2$model$income),
+verbal = mean(mod2$model$verbal)
+)
+
+predictions3 <- predict(
+  mod2,
+  newdata = datnew3,
+  type = 'response',
+  se = TRUE
+)
+print(predictions3)
+
+
+predict(mod2, new=datnew3, interval="prediction")
+
+```
+The amount that a male with average status, income, and verbal score would spend on gambling yearly is between -.245^2 pounds and 8.344^2
+
+the square root of the pounds that a male with average status, income, and verbal score would spend on gambling yearly is between -.245 and 8.344
+
+
+D. Repeat the prediction for the model in #C for a female with status=20,
+income=1, verbal=10. Comment on the credibility of the result.
+```{r}
+mod2 <- lm(sqrt(gamble)~sex+status+income+verbal, teengamb)
+
+datnew4 <- data.frame(
+  sex = 1,
+ status = 20,
+income = 1,
+verbal = 10
+)
+
+predictions4 <- predict(
+  mod2,
+  newdata = datnew4,
+  type = 'response',
+  se = TRUE
+)
+print(predictions4)
+
+predict(mod2, new=datnew4, interval="prediction")
+```
+
+This result is less credible than that in question C. because the fit is -2.086, indicating a poor fit.
+
+
+
+E. Now, go back to #A. Consider males with average (given these data) status,
+income and verbal score would gamble along with an appropriate 95% CI. How
+does it compare to the interval in #A?
+```{r}
+
+
+```
+
