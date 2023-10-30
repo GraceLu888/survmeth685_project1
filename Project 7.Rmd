@@ -1,0 +1,151 @@
+---
+title: "Project 7"
+output: html_document
+date: "2023-10-24"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+1. Faraway Chapter 6. Exercise 2.
+• Use the teengamb dataset, fit a model with gamble as the response and the other variables as predictors.
+```{r}
+library(faraway)
+data(teengamb)
+
+mod1 <- lm(gamble~sex+status+income+verbal, teengamb)
+```
+
+• Perform regression diagnostics on the model to answer the questions 1.A to 1.G. Display any plots that are relevant. Do not provide plots about which you have nothing to say. Suggest possible improvements or corrections to the model where appropriate.
+
+1.A. Check the zero error mean assumption using residual plots. What do you conclude?
+```{r}
+summary(resid(mod1))
+
+hist(resid(mod1))  
+plot(density(resid(mod1)),
+     main="Density Plot")
+```
+The mean of the errors is 0. This indicates the model is a good fit because the residuals are approximately equal in both directions from the model.
+
+
+1.B. Check the constant error variance assumption using residual plots as well as a formal testing. What do you conclude?
+```{r}
+plot(fitted(mod1),resid(mod1))+ 
+abline(h=0,col="blue")
+```
+
+```{r}
+cor(fitted(mod1),resid(mod1))
+summary(lm(resid(mod1)~fitted(mod1)))
+var.test(resid(mod1)[fitted(mod1)<=10],
+         resid(mod1)[fitted(mod1)>10])
+```
+Because the p value and f value are significant, we can reject the null and conclude the true ratio of variances is not equal to 1. The error variance is not constant.
+
+1.C. Check the error normality assumption. What do you conclude?
+```{r}
+qqnorm(resid(mod1))
+shapiro.test(resid(mod1))
+```
+The errors are not normally distributed. We know this because the shapiro-wilk test has a p-value of 8.16e-05, which is less than .05. We therefore reject the null hypothesis, that it is normally distributed, and accept the the alternative hypothesis, that it is not normally distributed. Because the Shapiro-Wilk test only tests one tail of the error distribution, we must also look at the q-q plot. This plot is not linear, which provides the evidence we need to conclude errors are not normally distributed.
+
+1.D. Check for large leverage points. Which observations have a large leverage? 
+```{r}
+hat <- hatvalues(mod1)
+hat
+sum(hat)
+mean(hat)
+
+hat>2*mean(hat)
+```
+```{r}
+halfnorm(hat)
+```
+Observations 35 and 42 have large leverage. They have usual values of one of the predictors.
+
+
+1.E. Check for outliers. What do you conclude?
+```{r}
+r_ex<-rstudent(mod1)
+sort(r_ex)[1:47]
+sort(r_ex,dec=T)[1:47]
+abs(r_ex)>abs(qt(.05/(47),47-4))
+```
+Observation 24 is an outlier. There is an unusually high value of the outcome, money spent on gambling.
+
+1.F. Check for influential points. What do you conclude?
+```{r}
+cd<-cooks.distance(mod1)
+summary(cd)
+sort(cd,dec=T)[1:47]
+```
+
+```{r,fig.width=4, fig.height=4}
+halfnorm(cd)
+```
+
+```{r}
+teengamb[c(24,39),]
+summary(teengamb)
+```
+Observations 24 and 39 are influential points. Observation 24 had the max income and gamble, and 39 has the max income, which makes them influential
+
+1.G. Check the structure of the relationship between the predictors and the response.
+```{r}
+#mod1 <- lm(gamble~sex+status+income+verbal, teengamb)
+mod2<-residuals(lm(gamble~sex+status+income+verbal,teengamb)) 
+mod3<-residuals(lm(verbal~sex+status+income,teengamb)) 
+```
+
+```{r,fig.width=4, fig.height=4}
+plot(mod3,mod2)+
+abline(0,coef(mod1)['verbal'], col="red")  
+```
+The relationship between the residuals of gamble and verbal are roughly linear, so the relationship between these two variables is roughly linear.
+
+```{r}
+#mod1 <- lm(gamble~sex+status+income+verbal, teengamb)
+#mod2<-residuals(lm(gamble~sex+status+income+verbal,teengamb)) 
+mod4<-residuals(lm(income~sex+status+verbal,teengamb)) 
+```
+
+```{r,fig.width=4, fig.height=4}
+plot(mod4,mod2)+
+abline(0,coef(mod1)['verbal'], col="red")  
+```
+
+The relationship between the residuals of gamble and income are somewhat linear so the relationship between income and gamble appears to be linear.
+
+```{r}
+#mod1 <- lm(gamble~sex+status+income+verbal, teengamb)
+
+#mod2<-residuals(lm(gamble~sex+income+verbal,teengamb)) 
+mod5<-residuals(lm(status~sex+income+verbal,teengamb)) 
+```
+
+```{r,fig.width=4, fig.height=4}
+plot(mod5,mod2)+
+abline(0,coef(mod1)['verbal'], col="red")  
+```
+The relationship of the residuals of gamble and status does not appear to be linear, so we conclude these variables do not have a linear relatonship
+
+```{r}
+#mod1 <- lm(gamble~sex+status+income+verbal, teengamb)
+#mod2<-residuals(lm(gamble~sex+income+verbal,teengamb)) 
+mod6<-residuals(lm(sex~status+income+verbal,teengamb)) 
+```
+
+```{r,fig.width=4, fig.height=4}
+plot(mod6,mod2)+
+abline(0,coef(mod1)['verbal'], col="red")  
+```
+The relationship between the residuals of gamble and sex are somewhat linear so the relationship between sex and gamble appears to be linear.
+
+```{r,fig.width=4, fig.height=4}
+termplot(mod1, partial.resid=T, terms=1)
+termplot(mod1, partial.resid=T, terms=2)
+termplot(mod1, partial.resid=T, terms=3)
+termplot(mod1, partial.resid=T, terms=4)
+```
+The partial residual plots are all near linear except for sex, which makes sense as it is a binary variable.
