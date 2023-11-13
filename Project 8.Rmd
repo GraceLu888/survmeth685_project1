@@ -1,0 +1,163 @@
+---
+title: "Project 8"
+output: html_document
+date: "2023-10-31"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1. Faraway Chapter 7. Exercise 5.
+• For the prostate data, fit a model with lpsa as the response and the other variables
+as predictors.
+
+```{r}
+library(faraway)
+data("prostate")
+```
+
+```{r}
+model1 <- lm(lpsa~lcavol+lweight+age+lbph+svi+lcp+gleason+pgg45, prostate)
+```
+
+1.A. Compute and comment on the condition numbers.
+```{r}
+x_mod1<-model.matrix(model1)[,-1] 
+x_mod1
+e1<-eigen(t(x_mod1)%*%x_mod1)
+e1
+e1$val
+```
+
+
+```{r}
+#lm(lpsa~lcavol+lweight+age+lbph+svi+lcp+gleason+pgg45, prostate)
+kappa1<-sqrt(max(e1$val)/min(e1$val))
+nu1<-sqrt(max(e1$val)/e1$val)
+kappa1;nu1 
+```
+Kappa, the condition number, is very high, indicating collinearity of at least two of the predictors
+from the Nu values, we see that there is a high condition index (>30) for age, lbph, svi, lcp, gleason, and pgg45
+
+
+
+1.B. Compute and comment on the correlations between the predictors.
+```{r}
+cor(prostate[,c("lcavol","lweight","age","lbph","svi", "lcp", "gleason", "pgg45")])
+```
+Larger absolute value indicates greater correlation between predictors. The strongest correlation we see is between gleason and pgg45. The absolute value is clossest to one. the correlations between lcp and lcavol and between lcp ans svi are also fairly high.
+
+1.C. Compute the variance inflation factors.
+```{r}
+vif(x_mod1)
+```
+None of these values are particularly high, they are all less than five. This does not indicate any strong evidence of collinearity.
+
+
+
+2. Faraway Chapter 8. Exercise 4.
+• For the cars dataset, fit a linear model with distance as the response and speed as
+the predictor.
+```{r}
+data("cars")
+```
+
+```{r}
+model2 <- lm(dist~speed, cars)
+summary(model2)
+```
+
+2.A. Test the homoscedasticity assumption using both a scatter plot between the
+residuals and fitted values and an F-test of equal variance below and above the
+fitted value of 30.
+```{r}
+summary(lm(resid(model2)~fitted(model2)))
+var.test(resid(model2)[fitted(model2)<=30],
+         resid(model2)[fitted(model2)>30])
+```
+
+```{r}
+plot(fitted(model2),residuals(model2))+
+abline(h=0,col="red")
+```
+
+The f value is .242 which is quite far from a ratio of variances of one. Therefore, we can conclude this violates the assumption of constant variance. The p value is .0067 which is less than our alpha value of .05, so we conclude 
+the result is statistically significant. From the scatterplot we see a slight funnel shape, which helps to confirm this conclusion.
+
+2.B. Report the estimate of the heteroscedastic consistent variance for the
+regression slope.
+```{r}
+hetvar <- model2 %>% 
+  vcovHC() %>% 
+  diag() 
+print(hetvar)
+
+ 0.4155^2
+
+
+```
+the heteroscedastic variance of the slope is .1828. The homoscedastic variance is .1726, which I calculated by squaring the standard error.
+
+
+2.C. Construct 95% confidence interval of the regression slope assuming ho-
+moscedasticity and using the results in 2.B. How do they compare?
+```{r}
+#homoscedastic
+confint(model2)
+
+#heteroscedastic
+hetvar <- model2 %>% 
+  vcovHC() %>% 
+  diag() %>%
+  sqrt()
+
+
+model2$coefficients[2]+c(-1,1)*qt(0.975,model2$df.residual)*(hetvar[2])
+```
+The confidence interval of the slope is wider if we assume heteroscedacity because the variance and therefore the standard error is higher.
+
+2.D. Check for the lack of fit of the model.
+```{r}
+sumary(model2)
+```
+the R^2 is somewhat low indicating little of the variability in the outcome is explained by the model.
+
+```{r}
+model2 <- lm(dist~speed, cars)
+mod_RESID<-lm(resid(model2)~factor(speed),cars) 
+
+anova(model2)
+
+anova(mod_RESID)
+
+11354 - 6764.8 
+```
+total RSS = 11354
+SS error = 6764.8
+SS Lack of Fit = 4589.2
+```{r}
+length(unique(cars$speed))
+#19-1= 18 
+
+length(cars$speed)
+
+#50-19=31
+```
+
+
+```{r}
+(((11354 - 6764.80)/18)/(6764.8/31))
+#1.1683
+
+1 - pf(1.168345,df1=18,df2=31)
+
+
+library(olsrr)
+ols_pure_error_anova(model2)
+
+```
+the manually calculated F statistic is 1.1683, with a p value of .342
+
+The f value from the anova test is 1.237, with a p value of .2948. 
+Both f values are greater than one annd p values are less than our alpha value. Therefore we have some evidence to reject the null hypothesis, that that there is no lack of fit (the model reasonably represents the data), and accept the alternative, that there is a lack of fit in the model.
