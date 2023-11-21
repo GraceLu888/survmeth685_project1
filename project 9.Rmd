@@ -1,0 +1,102 @@
+---
+title: "Project 9"
+output: html_document
+date: "2023-11-14"
+---
+1. Faraway Chapter 9. Exercise 7.
+• Use the cheddar data for this question.
+```{r}
+library(faraway)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+library(dplyr)
+library(MASS)
+library(mgcv)
+library(leaps)
+data("cheddar")
+```
+
+1.A. Fit an additive model for a response of taste with the other three variables
+as predictors. Is any transformation of the predictors suggested?
+```{r}
+model1 <- lm(taste~Acetic+H2S+Lactic, cheddar)
+model1
+
+amod<-gam(taste~s(Acetic)+s(H2S)+s(Lactic),data=cheddar) 
+plot(amod)
+summary(amod)
+
+```
+the edf of each coefficient is 1, indicating a linear relationship with the outcome, however the smooth term for H2S is significant, meaning we should probably perform a transformation on this predictor.
+
+1.B. Use the Box-Cox method to determine an optimal transformation of the
+response. Would it be reasonable to leave the response untransformed?
+```{r}
+mod<-lm(taste~.,cheddar)
+plot(mod$fitted.values,mod$residuals); abline(h=0,col="red")
+
+boxcox(mod)
+
+boxcox(mod, plotit=T, lambda=seq(0.0,1.0,by=0.1))
+
+tmod<-lm(I(sqrt(taste))~.,cheddar)
+sumary(mod)
+sumary(tmod)
+plot(tmod$fitted.values,tmod$residuals); abline(h=0,col="red")
+```
+The confidence interval for the lambda value falls between .4 and .95, indicating a square root transformation. We should not leave the response untransformed, even though this will diminish the interpertability.
+
+2. Faraway Chapter 10. Exercise 2.
+• Using the teengamb dataset with gamble as the response and the other variables.
+```{r}
+data('teengamb')
+teengamb
+
+model2 <- lm(gamble~sex+status+income+verbal, teengamb)
+```
+
+Implement the following variable selection methods to determine the “best” model.
+
+2.A. Backward elimination (based on the significance of predictors)
+```{r}
+back.mod <- stepAIC(model2, direction = "backward") 
+sumary(back.mod)
+back.mod$anova
+```
+Backward elimination indicates status should be removed.
+
+2.B. AIC
+```{r}
+AIC(model2)
+
+sub<-regsubsets(gamble~.,teengamb)
+regsubsets(gamble~., teengamb) 
+names(diabetes)
+
+rsub<-summary(sub)
+names(rsub)
+
+rsub$which 
+
+dim(teengamb)
+n<-dim(teengamb)[1]
+n
+
+aic<-n*log(rsub$rss/n)+c(1:4)*2
+
+plot(I(1:4), aic, ylab="AIC", xlab="# Predictors")
+```
+Having a fourth predictor increases AIC which indicates greater error in the model
+
+2.C. Adjusted R2
+```{r}
+plot(I(1:4), rsub$adjr2, ylab="R^2_adj", xlab="# Predictors")
+```
+Adding a fourth predictor decreases R^2, indicating a poorer model fit. 
+
+2.D. Mallows Cp
+```{r}
+plot(I(1:4), rsub$cp, ylab="Mallow's Cp", xlab="# Predictors")
+```
+Adding a fourth predictor increases Mallows Cp, which is proportional to AIC. Higher values indicate a poorer fit.
