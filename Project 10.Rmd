@@ -1,0 +1,73 @@
+---
+title: "Project 10"
+output: html_document
+date: "2023-11-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Use rats data in faraway.
+
+Description: An experiment was conducted as part of an investigation to combat the
+effects of certain toxic agents.
+Format: A data frame with 48 observations on the following 3 variables:
+time: survival time in tens of hours
+poison: the poison type - a factor with levels I II III, randomly assigned to
+subjects.
+treat: the treatment - a factor with levels A B C D, randomly assigned to subjects.
+```{r}
+library(faraway)
+library(ggplot2)
+head(rats)
+```
+
+
+Focus on time as the response and treat as the predictor. Plot time as a
+function of treat using a jittered scatter plot. Add a mean of time for each level
+of treat to the plot. What pattern do you see? Describe this in layman’s terms.
+```{r}
+#data('rats')
+
+(means <- aggregate(time~treat+poison,rats, mean)) 
+
+
+ggplot(rats,aes(x=treat, y=time))+
+  geom_point(position=position_jitter(width=0.1))+
+  stat_summary(fun="mean",colour = "red")+
+  geom_text(data = means, aes(label = time, y = time))
+```
+The third level of poison had the lowest time across each treatment group.
+ The treatment group with the lowest mean time was A, followed by C, then D, then B. 
+
+Perform a one-way ANOVA with time as the response and treat as the
+predictor. Use aov() as well as lm(). From each, describe your observation about
+what can be concluded.
+```{r}
+summary(aov(time~treat,rats))
+anova(lm(time~treat,rats))
+summary(lm(time~treat,rats))
+```
+
+From the large F value and very small p value in the first two tests, we can reject the null hypothesis, that the mean time across each treatment group is the same, and conclude that there is a significant difference in means across each treatment group. The first two tests show the same thing. 
+
+The third test shows the estimate for each coefficient independently. Based on the t and p values for D and B, we can conclude the means of these groups are significantly different from the mean of the comparison group A. We reject the nnull hypothesis, that there is not a difference in means from the comparison group.
+The t and p values for group C do not provide strong evidence to reject the null, so we conclude there is not a significant difference in the mean of group C and the mean of group A.
+
+
+Perform pairwise comparison using Tukey’s difference test. Which pairs of
+treat are different? How does this result compare to the result from #2?
+```{r}
+TukeyHSD(aov(time~treat,rats))
+#t.test(time~treat,subset(rats,treat!="A"))$p.value
+#t.test(time~treat,subset(rats,treat!="B"))$p.value
+#t.test(time~treat,subset(rats,treat!="C"))$p.value
+#t.test(time~treat,subset(rats,treat!="D"))$p.value
+```
+The pairs that are significantly different are B-A and C-B. We know this because their intervals do not contain zero and their p values are <.05. this is surprising because the test in #2 showed no significant difference between group A and B but did show a difference between group B and C. It is possible the null was falsely rejected in the test in #2 because of the increased chance of type one error introduced by performing multiple comparisons.
+
+
+How would you describe the structure of this experiment?
+
+This experiment utilized a multi-way treatment structure, testing the effects of treatment level and poison level at the same time. 
+This is a balanced experiment, the same number of rats were assigned to each treatment and poison group. There is no control group. 
