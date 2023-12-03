@@ -1,0 +1,155 @@
+---
+title: "Project 10"
+output: html_document
+date: "2023-11-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Use rats data in faraway.
+
+Description: An experiment was conducted as part of an investigation to combat the
+effects of certain toxic agents.
+Format: A data frame with 48 observations on the following 3 variables:
+time: survival time in tens of hours
+poison: the poison type - a factor with levels I II III, randomly assigned to
+subjects.
+treat: the treatment - a factor with levels A B C D, randomly assigned to subjects.
+```{r}
+library(faraway)
+library(ggplot2)
+library(dplyr)
+head(rats)
+```
+
+
+1. Focus on time as the response and treat as the predictor. Plot time as a
+function of treat using a jittered scatter plot. Add a mean of time for each level
+of treat to the plot. What pattern do you see? Describe this in layman’s terms.
+```{r}
+data('rats')
+
+(means <- aggregate(time~treat,rats, mean)) 
+
+
+ggplot(rats,aes(x=treat, y=time))+
+  geom_point(position=position_jitter(width=0.1))+
+  stat_summary(fun="mean",colour = "red")+
+  geom_text(data = means, aes(label = time, y = time))
+```
+The treatment group with the lowest mean time was A, followed by C, then D, then B. Meaning treatment A was the most effective and on average killed rats in the smallest amount of time
+
+2. Examine time as the response and treat and poison as the predictors through
+a jittered scatter plot as done in #1 from Project 10 with an addition of lines
+that show the mean of time at the interaction of poison and treat. Does the
+pattern seen in #1 from Project 10 hold across all poison types?
+```{r}
+meanz <- aggregate(time~treat+poison,rats, mean)
+ggplot(rats,aes(x=treat, y=time))+
+  geom_point(position=position_jitter(width=0.1))+
+  stat_summary(fun="mean",colour = "red")+
+  geom_text(data = meanz, aes(label = time, y = time))+
+  stat_summary(fun=mean, geom="line", 
+               aes(group=poison, linetype=poison)) 
+```
+the pattern does hold, but it is worth noting that poison 1 and 2 are less effective overall. In all treatments but D, poison 1 is the least effective. 
+
+3. Model time on treat, poison and their interaction in a linear regression. What
+do the coefficient estimates of interactions indicate? How does this correspond
+to your observation in #2?
+```{r}
+model3 <- lm(time~treat+poison+treat*poison,rats)
+summary(model3)
+```
+The coefficient of treatB:poisonII indicates that there is an increase of .0275 in time (tens of hours) when treat = B and poison = II compared to when treat dne B and poison dne II. This makes sense as the result in #2 shows the mean of this group as higher than other groups
+
+The coefficient of treatC:poisonII indicates that there is an decrease of .1 in time (tens of hours) when treat = C and poison = II compared to when treat dne C and poison dne II. This is also seen in #2 with a small decrease for this group compared to others
+
+The coefficient of treatD:poisonII indicates that there is an increase of .15 in time (tens of hours) when treat = D and poison = II compared to when treat dne D and poison dne II. In the results from #2, we see a small increase from other poison levels in D for poison II and from other treat levels for treat D.
+
+The coefficient of treatB:poisonIII indicates that there is an decrease of .3425 in time (tens of hours) when treat = B and poison = III compared to when treat dne B and poison dne III. This decrease is seen in #2, there is a large decrease from other levels of poison in treatment B, which shows why this interaction term has a large absolute value. 
+ 
+The coefficient of treatC:poisonIII indicates that there is an decrease of .13 in time (tens of hours) when treat = C and poison = III compared to when treat dne C and poison dne III. This decrease is smaller than treatB:poisonIII but is also seen in #2.
+
+The coefficient of treatD:poisonIII indicates that there is an decrease of .0825 in time (tens of hours) when treat = D and poison = III compared to when treat dne D and poison dne III. This also aligns with the previous result.
+
+
+4. Check whether linear model assumptions hold for the model in #3. Describe
+what these assumptions are and whether they are met.
+
+Constant error variance
+```{r}
+plot(fitted(model3),residuals(model3))+
+abline(h=0,col="red")
+```
+
+
+```{r}
+summary(lm(resid(model3)~fitted(model3)))
+var.test(resid(model3)[fitted(model3)<=.5],
+         resid(model3)[fitted(model3)>.5])
+```
+The constant error variance assumption is not held. The f value and p value are significant, which indicates we should reject the null hypothesis, that the ratio of variances = 1. The ratio of variannces does not = 1 so the error variance is not constant.
+
+
+zero error mean
+```{r}
+summary(resid(model3))
+
+hist(resid(model3))  
+plot(density(resid(model3)),
+     main="Density Plot")
+```
+The zero error mean assumption assumes that the mean of the residuals = 0. From the statistical test and plots above, we can conclude this assumption is held and the mean of errors = 0.
+
+error normality
+```{r}
+qqnorm(resid(model3))
+shapiro.test(resid(model3))
+```
+The error normality assumption states that errors are normally distributed. The shapiro test has a p value that is less than .05, therefore we reject the null hypothesis, that the errors are normally distributed, and conclude they are not normally distributed. the test statistic is close to 1, indicating the errors are close to a normal distribution, but looking at the Q-Q plot, it is clear they do not follow the normal distribution.
+
+
+5. Address the problem identified in #4 through a transformation of the response
+variable. Describe the transformation used and discuss whether this is effective
+for addressing the assumption violations.
+```{r}
+library(MASS)
+sumary(model3)
+plot(model3$fitted.values,model3$residuals); abline(h=0,col="red")
+
+boxcox(model3)
+```
+The boxcox value is approximately -1, which indicates we should do an inverse transformation of the response
+```{r}
+model5<-lm(I(1/time)~treat+poison+treat*poison,rats)
+sumary(model3)
+sumary(model5)
+plot(model5$fitted.values,model5$residuals); abline(h=0,col="red")
+```
+
+```{r}
+qqnorm(resid(model5))
+shapiro.test(resid(model5))
+```
+From the Shapiro test, which no longer has a significant p value, and the q-q plot, we can conclude the new model does not violate the error normality assumption. The residual plot also indicates constant error variance.
+
+6.Compare which pairs of treat produce different time under the model in #3
+and under the model in #5. What do you observe?
+```{r}
+summary(model3)
+summary(model5)
+```
+The interaction terms for all levels of poison and treat are different, which makes sense as we have changed the relationship of the predictors and response. 
+
+7. Now, focus on time as a result of treat. Use treat as a random factor and
+interpret the effect of treat on time.
+```{r}
+library(lme4)
+rmod<-lmer(time~(1|treat), rats)
+summary(rmod)
+confint(rmod, oldNames = FALSE)
+```
+
+By allowing the intercept to vary by level of the treatment, we have a higher intercept than the previous models.
